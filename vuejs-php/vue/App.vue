@@ -12,10 +12,7 @@
                     <div class="3-three center">
                         <img :src="'assets/img/'+logo_vue" />
                     </div>
-                    <div class="full text-center" >
-                        <h1> (-_-) Wait You Forgot To Compile (-_-) </h1>
-                        <a href="https://sass-lang.com/documentation">SCSS Documentation</a> <a href="https://vuejs.org/">VUE Documentation</a> <a href="https://vuejs.org/v2/guide/components.html">VUE Single Components</a>
-                    </div>
+                    <message ></message>
                 </div>
             </transition>
         </div>
@@ -33,11 +30,15 @@
     /**
      * example 
      * 
-     * import notRelate from "{dir}" 
+     * 
      * 
      * 
      */
+    import message from "otherComponent.vue"
     export default{
+        components: {
+            message
+        },
         data() {
             return {
                 show: false,

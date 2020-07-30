@@ -7,5 +7,5 @@ require './vueComponent.php';
 
 $vue = new vueComponent();
 
-echo $vue->convertJS("../vue/App.vue");
+echo $vue->convertJS("App.vue");
 

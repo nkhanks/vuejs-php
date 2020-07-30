@@ -3,6 +3,7 @@
 class vueComponent {
 
     var $component;
+    var $path = "../vue/";
 
     function extractTemplate($script) {
         $this->component->template = "";
@@ -40,26 +41,32 @@ class vueComponent {
     }
 
     function extractImport($script) {
-        preg_match_all("/.*import.*from(.*)/m", $script, $matches, PREG_OFFSET_CAPTURE, 0);
-
-        foreach ($matches[1] as $import) {
+        preg_match_all("/.*import(.*)from(.*)/m", $script, $matches, PREG_OFFSET_CAPTURE, 0);
+        foreach ($matches[2] as $import) {
             $newComponent = new vueComponent();
             $newComponent->setComponent(preg_replace('/["\']/', "", trim($import[0])));
-            $this->component->components[] = $newComponent->getComponent();
+
+
+            $com = $newComponent->getComponent();
+            $com->isGlobal = false;
+            $com->name = trim($matches[1][0][0]);
+            $this->component->components[] = $com;
         }
 
-        return preg_replace("/.*import.*from(.*)/m", "", $script);
+        return preg_replace("/.*import(.*)from(.*)/m", "", $script);
     }
 
     function setComponent($filename) {
-        if (file_exists($filename)) {
-            $script = file_get_contents($filename);
+
+        if (file_exists($this->path . $filename)) {
+            $script = file_get_contents($this->path . $filename);
             $this->component = new stdClass();
             $this->component->isComponent = true;
+            $this->component->isGlobal = true;
             $this->component->name = pathinfo($filename, PATHINFO_FILENAME);
             ;
             $script = $this->extractTemplate($script);
- 
+
             $script = $this->extractScript($script);
 
             $script = $this->extractCSS($script);
@@ -78,11 +85,11 @@ class vueComponent {
 
         return $this->createJS($this->component);
     }
-    
+
     function convertCSS($filename) {
         $this->setComponent($filename);
 
-        
+
         return $this->createCSS($this->component);
     }
 
@@ -98,24 +105,35 @@ class vueComponent {
         //TO DO
     }
 
-    function createJS($component) {
-        $js = "\n /** VUE COMPONENT **/";
-        if ($component->isComponent) {
-            $js .= "\n Vue.component('{$component->name}',"
-                    . "{"
-                    . "template: `{$component->template}`,"
-                    . "{$component->js}"
-                    . ");\n";
+    function createJS($component, $global = true) {
+       
+        if ($component->isComponent) { 
+            $js = "\n /** VUE COMPONENT **/";
             if (!empty($component->components)) {
                 foreach ($component->components as $com) {
                     $js .= $this->createJS($com);
                 }
             }
+            if ($component->isGlobal) {
+                $js .= "\n Vue.component('{$component->name}',"
+                        . "{"
+                        . "template: `{$component->template}`,"
+                        . "{$component->js}"
+                        . ");\n";
+            } else {
+                $js .= "\n var {$component->name} = "
+                        . "{"
+                        . "template: `{$component->template}`,"
+                        . "{$component->js}"
+                        . "\n";
+            }
+        }else{
+            $js = "console.error('Vue[404] : Component Path Not Found')";
         }
         return $js;
     }
-    
-     function createCSS($component) {
+
+    function createCSS($component) {
         $css = "\n";
         if ($component->isComponent) {
             $css .= "\n {$component->style} ";
